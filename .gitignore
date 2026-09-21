@@ -1,0 +1,18 @@
+# datasets, model checkpoints and run outputs (large / regenerable / license-restricted)
+data/
+checkpoints/
+outputs/
+wandb/
+
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/
