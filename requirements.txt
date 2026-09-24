@@ -1,0 +1,7 @@
+torch>=2.10
+transformers>=5.0
+peft>=0.20
+pillow>=11.0
+scikit-learn>=1.5
+matplotlib>=3.9
+pytest>=7.0

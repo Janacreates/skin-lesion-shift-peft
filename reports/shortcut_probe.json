@@ -1,0 +1,32 @@
+[
+  {
+    "method": "linear_probe",
+    "seed": 42,
+    "crop_fraction": 0.6,
+    "ood_accuracy_original": 0.4800796812749004,
+    "ood_accuracy_cropped": 0.4681274900398406,
+    "accuracy_change_from_cropping": -0.011952191235059806,
+    "ood_macro_f1_original": 0.46865474776143945,
+    "ood_macro_f1_cropped": 0.4683928549535964
+  },
+  {
+    "method": "full",
+    "seed": 42,
+    "crop_fraction": 0.6,
+    "ood_accuracy_original": 0.46215139442231074,
+    "ood_accuracy_cropped": 0.46613545816733065,
+    "accuracy_change_from_cropping": 0.003984063745019917,
+    "ood_macro_f1_original": 0.4411313884619728,
+    "ood_macro_f1_cropped": 0.4429236401348744
+  },
+  {
+    "method": "lora",
+    "seed": 42,
+    "crop_fraction": 0.6,
+    "ood_accuracy_original": 0.5119521912350598,
+    "ood_accuracy_cropped": 0.5179282868525896,
+    "accuracy_change_from_cropping": 0.005976095617529875,
+    "ood_macro_f1_original": 0.4935111569253259,
+    "ood_macro_f1_cropped": 0.5080719552081966
+  }
+]

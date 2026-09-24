@@ -1,0 +1,49 @@
+{
+  "method": "lora",
+  "seed": 1,
+  "epochs": 5,
+  "lr": 0.001,
+  "trainable_params": 74500,
+  "total_params": 5525188,
+  "trainable_pct": 1.3483704083915335,
+  "train_seconds": 21.06341814994812,
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 0.9896106796947033,
+      "val_accuracy": 0.6929824561403509
+    },
+    {
+      "epoch": 1,
+      "train_loss": 0.5255078183418793,
+      "val_accuracy": 0.8245614035087719
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.3475164441850173,
+      "val_accuracy": 0.8596491228070176
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.18205088226166904,
+      "val_accuracy": 0.868421052631579
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.08923734770031291,
+      "val_accuracy": 0.8596491228070176
+    }
+  ],
+  "id_test": {
+    "n": 122,
+    "accuracy": 0.8032786885245902,
+    "macro_f1": 0.8024370524370524,
+    "ece": 0.08241179878594443
+  },
+  "ood_test": {
+    "n": 502,
+    "accuracy": 0.5239043824701195,
+    "macro_f1": 0.525995684356463,
+    "ece": 0.18942335681373856
+  }
+}
