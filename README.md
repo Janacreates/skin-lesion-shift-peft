@@ -137,8 +137,22 @@ This is a tight, honest v1, not the full study. Multi-seed error bars, the other
 - [x] Day 4: LoRA; in-distribution + out-of-distribution eval for all 3 methods; `skinshift/report.py` comparison table + figures — done
 - [x] Day 5: calibration + abstention (risk-coverage), 5 seeds with std bands — done; caught and fixed a real interpolation bug along the way (see Results)
 - [x] Day 6: shortcut probe — done (see Results); no evidence found of border-shortcut reliance
-- [ ] Day 7: push to GitHub
-- [ ] *(beyond v1)* DoRA, LoRA+, VeRA, AdaLoRA, multi-seed runs, subgroup analysis, HAM10000 as a second shift
+- [x] Day 7: push to GitHub, with CI — done
+- [ ] *(beyond v1)* DoRA, LoRA+, VeRA, AdaLoRA, subgroup analysis, HAM10000 as a second shift
+
+## Run it
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements-lock.txt   # exact versions the results above were produced with
+python -m skinshift.download            # ~75MB, a few minutes (small per-image API calls)
+python -m skinshift.train --method linear_probe   # and --method full / lora
+python -m skinshift.report              # comparison table + figures from whatever ran
+python -m skinshift.shortcut_probe      # the Day 6 diagnostic
+pytest -q                               # 19 tests
+```
+
+`requirements.txt` (unpinned) also works for a first-time install, but `requirements-lock.txt` is what CI uses and what the numbers above were actually produced with — pinned deliberately, because `transformers`' internal ViT layer names already changed across versions during this project (see the LoRA config comment in `skinshift/train.py`), which silently breaks the LoRA arm rather than raising an obviously-relevant error.
 
 ## Limitations to state up front
 
@@ -146,6 +160,7 @@ This is a tight, honest v1, not the full study. Multi-seed error bars, the other
 - Labels come from different sources with different confirmation standards (biopsy versus consensus).
 - Small subgroups will give wide uncertainty.
 - Some dermatology datasets carry non-commercial licenses, which will be checked and stated.
+- Training seeds don't reproduce bit-for-bit on Apple's MPS backend (confirmed directly: the same seed run twice gave slightly different numbers) — the 5-seed spread already captures more variance than seed-to-seed noise alone, so this doesn't change any conclusion above, but exact reproduction of a single seed's numbers isn't guaranteed.
 
 ## License
 

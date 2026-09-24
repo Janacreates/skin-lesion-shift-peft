@@ -1,0 +1,13 @@
+# Exact versions the results in README.md were produced and tested with.
+# `transformers`' ViT layer names (q_proj/v_proj vs. the older query/value) already turned out
+# to be version-sensitive during this project (see skinshift/train.py's LoRA config comment) --
+# CI installs from this file, pinned, rather than "latest", so it tests the code actually used
+# to produce the results instead of re-discovering that same breakage on every new release.
+torch==2.14.0
+transformers==5.17.0
+peft==0.21.0
+pillow==12.3.0
+scikit-learn==1.9.1
+matplotlib==3.11.2
+pytest==9.1.1
+numpy==2.4.6

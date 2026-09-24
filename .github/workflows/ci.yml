@@ -1,0 +1,25 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-lock.txt
+      # CPU-only torch first, from PyTorch's own CPU wheel index (a few hundred MB instead of
+      # the multi-GB CUDA build pip installs by default on Linux; this repo never needs a GPU).
+      - run: pip install --index-url https://download.pytorch.org/whl/cpu torch==2.14.0
+      # Everything else, pinned. See requirements-lock.txt for why this repo tests against
+      # pinned versions rather than "latest": transformers' internal ViT layer names already
+      # changed across versions during development (skinshift/train.py has the details), so a
+      # "latest" leg would mostly just re-discover that same upstream break, not this code's bugs.
+      - run: pip install -r requirements-lock.txt
+      - run: pytest -q
