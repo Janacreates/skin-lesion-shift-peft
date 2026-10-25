@@ -1,10 +1,11 @@
 """Gradio demo: a skin lesion classifier that checks whether a photo looks like its training data
 before it answers. Runs the int8 ONNX model on CPU; see core.py for the two gates.
 
-    python app.py   # serves on http://localhost:7860
+    python app.py   # serves on http://localhost:7860 (or $PORT, which cloud hosts set)
 """
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import gradio as gr
@@ -70,4 +71,4 @@ with gr.Blocks(title="Shift-aware skin lesion classifier") as demo:
     image.change(classify, inputs=image, outputs=[verdict, probabilities])
 
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860)
+    demo.launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 7860)))
