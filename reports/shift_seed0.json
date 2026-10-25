@@ -1,0 +1,41 @@
+{
+  "n_val": 127,
+  "n_id_test": 117,
+  "n_ood": 502,
+  "detectors": {
+    "msp": {
+      "auroc": 0.7304457384138658,
+      "ood_caught": 0.18725099601593626,
+      "id_test_false_alarm": 0.042735042735042736
+    },
+    "energy": {
+      "auroc": 0.8489120441311676,
+      "ood_caught": 0.40039840637450197,
+      "id_test_false_alarm": 0.05128205128205128
+    },
+    "mahalanobis": {
+      "auroc": 0.9564817652467055,
+      "ood_caught": 0.6215139442231076,
+      "id_test_false_alarm": 0.017094017094017096
+    }
+  },
+  "thresholds": {
+    "mahalanobis": 376.55224609375,
+    "confidence": 0.6982630491256714
+  },
+  "id_test": {
+    "accuracy_all": 0.8205128205128205,
+    "refused_unfamiliar": 0.017094017094017096,
+    "refused_not_confident": 0.17094017094017094,
+    "answered": 0.811965811965812,
+    "accuracy_when_answered": 0.8842105263157894
+  },
+  "ood": {
+    "accuracy_all": 0.5278884462151394,
+    "refused_unfamiliar": 0.6215139442231076,
+    "refused_not_confident": 0.1394422310756972,
+    "answered": 0.23904382470119523,
+    "accuracy_when_answered": 0.6166666666666667
+  },
+  "seed": 0
+}

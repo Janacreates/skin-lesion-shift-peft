@@ -1,0 +1,142 @@
+{
+  "seed": 42,
+  "backends": {
+    "pytorch": {
+      "n_val": 119,
+      "n_id_test": 126,
+      "n_ood": 502,
+      "detectors": {
+        "msp": {
+          "auroc": 0.6645323468032631,
+          "ood_caught": 0.16733067729083664,
+          "id_test_false_alarm": 0.07142857142857142
+        },
+        "energy": {
+          "auroc": 0.7584582305697842,
+          "ood_caught": 0.26095617529880477,
+          "id_test_false_alarm": 0.06349206349206349
+        },
+        "mahalanobis": {
+          "auroc": 0.9316069057104914,
+          "ood_caught": 0.6852589641434262,
+          "id_test_false_alarm": 0.0873015873015873
+        }
+      },
+      "thresholds": {
+        "mahalanobis": 393.08050537109375,
+        "confidence": 0.6005876064300537
+      },
+      "id_test": {
+        "accuracy_all": 0.7142857142857143,
+        "refused_unfamiliar": 0.0873015873015873,
+        "refused_not_confident": 0.19047619047619047,
+        "answered": 0.7222222222222222,
+        "accuracy_when_answered": 0.8131868131868132
+      },
+      "ood": {
+        "accuracy_all": 0.5159362549800797,
+        "refused_unfamiliar": 0.6852589641434262,
+        "refused_not_confident": 0.10358565737051793,
+        "answered": 0.21115537848605578,
+        "accuracy_when_answered": 0.660377358490566
+      }
+    },
+    "onnx_fp32": {
+      "n_val": 119,
+      "n_id_test": 126,
+      "n_ood": 502,
+      "detectors": {
+        "msp": {
+          "auroc": 0.6645323468032631,
+          "ood_caught": 0.16733067729083664,
+          "id_test_false_alarm": 0.07142857142857142
+        },
+        "energy": {
+          "auroc": 0.7584582305697842,
+          "ood_caught": 0.26095617529880477,
+          "id_test_false_alarm": 0.06349206349206349
+        },
+        "mahalanobis": {
+          "auroc": 0.9316069057104914,
+          "ood_caught": 0.6852589641434262,
+          "id_test_false_alarm": 0.0873015873015873
+        }
+      },
+      "thresholds": {
+        "mahalanobis": 393.0807189941406,
+        "confidence": 0.6005873680114746
+      },
+      "id_test": {
+        "accuracy_all": 0.7142857142857143,
+        "refused_unfamiliar": 0.0873015873015873,
+        "refused_not_confident": 0.19047619047619047,
+        "answered": 0.7222222222222222,
+        "accuracy_when_answered": 0.8131868131868132
+      },
+      "ood": {
+        "accuracy_all": 0.5159362549800797,
+        "refused_unfamiliar": 0.6852589641434262,
+        "refused_not_confident": 0.10358565737051793,
+        "answered": 0.21115537848605578,
+        "accuracy_when_answered": 0.660377358490566
+      },
+      "id_test_agreement_with_pytorch": 1.0,
+      "id_test_max_abs_logit_diff": 1.6570091247558594e-05,
+      "ood_agreement_with_pytorch": 1.0,
+      "ood_max_abs_logit_diff": 2.002716064453125e-05
+    },
+    "onnx_int8": {
+      "n_val": 119,
+      "n_id_test": 126,
+      "n_ood": 502,
+      "detectors": {
+        "msp": {
+          "auroc": 0.6744766963890471,
+          "ood_caught": 0.16533864541832669,
+          "id_test_false_alarm": 0.07936507936507936
+        },
+        "energy": {
+          "auroc": 0.7545057863782965,
+          "ood_caught": 0.2410358565737052,
+          "id_test_false_alarm": 0.06349206349206349
+        },
+        "mahalanobis": {
+          "auroc": 0.9269114020110036,
+          "ood_caught": 0.7250996015936255,
+          "id_test_false_alarm": 0.0873015873015873
+        }
+      },
+      "thresholds": {
+        "mahalanobis": 377.1963806152344,
+        "confidence": 0.6018465757369995
+      },
+      "id_test": {
+        "accuracy_all": 0.7142857142857143,
+        "refused_unfamiliar": 0.0873015873015873,
+        "refused_not_confident": 0.20634920634920634,
+        "answered": 0.7063492063492064,
+        "accuracy_when_answered": 0.8314606741573034
+      },
+      "ood": {
+        "accuracy_all": 0.5059760956175299,
+        "refused_unfamiliar": 0.7250996015936255,
+        "refused_not_confident": 0.10557768924302789,
+        "answered": 0.1693227091633466,
+        "accuracy_when_answered": 0.611764705882353
+      },
+      "id_test_agreement_with_pytorch": 0.9365079365079365,
+      "id_test_max_abs_logit_diff": 0.7900335788726807,
+      "ood_agreement_with_pytorch": 0.9203187250996016,
+      "ood_max_abs_logit_diff": 0.7277310490608215
+    }
+  },
+  "latency_ms_batch1_cpu": {
+    "pytorch": 5.634271015878767,
+    "onnx_fp32": 5.5861250148154795,
+    "onnx_int8": 6.092833529692143
+  },
+  "size_mb": {
+    "onnx_fp32": 23.244852,
+    "onnx_int8": 6.707614
+  }
+}

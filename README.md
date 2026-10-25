@@ -1,6 +1,6 @@
 # Fine-tuning under distribution shift: skin lesion classification with LoRA-family methods
 
-> **Status: v1 complete (2026-09-23).** All three methods trained and evaluated in- and out-of-distribution across 5 seeds, plus a single-seed shortcut probe — see "Results" below. Only pushing to GitHub is left (roadmap). Other PEFT methods (DoRA, LoRA+, VeRA, AdaLoRA) and a second shift remain future work, not v1 scope.
+> **Status: v2 (2026-10-24): a demo app with a shift detector, ready for Hugging Face Spaces, see "v2" below. v1 complete (2026-09-23).** All three methods trained and evaluated in- and out-of-distribution across 5 seeds, plus a single-seed shortcut probe — see "Results" below. Other PEFT methods (DoRA, LoRA+, VeRA, AdaLoRA) and a second shift remain future work, not v1 scope.
 
 > **Research and education only.** Not medical advice, and not a diagnostic tool.
 
@@ -50,6 +50,56 @@ Question 5 from above: does the model rely on border content (rulers, ID sticker
 **Two things found and fixed while producing these numbers, left in for the record:**
 - One `lora` run silently overlapped with a monitoring script that re-ran the same seed concurrently, inflating that run's *training-time* measurement ~40x (GPU contention, not a real cost). The comparison table reports the **median** training time across seeds for exactly this reason — the accuracy/calibration numbers from that run were unaffected and are included normally.
 - The first version of the multi-seed risk-coverage plot used `np.interp` on an array that wasn't sorted ascending (a real bug, not a data issue), which silently produced a near-flat, wrong curve. Caught by inspecting the figure rather than trusting the numbers, fixed, and locked in with a regression test (`tests/test_report.py`).
+
+## v2: deployment and a shift detector (2026-10-24)
+
+The v1 results show the problem: on smartphone photos every method loses 25 to 31 accuracy points, yet stays fairly confident. v2 asks whether a deployed model can notice that a photo is unlike its training data and refuse it, then ships that as a demo app.
+
+### Shift detection (LoRA, 5 seeds)
+
+[`skinshift/shift.py`](skinshift/shift.py) compares three per-image "unusualness" scores: the model's own confidence (1 − max softmax), the energy score, and the **Mahalanobis distance** from the image's CLS embedding to the nearest class mean (one shared covariance with Ledoit-Wolf shrinkage). Same protocol as v1: each detector is fit on the training split, its threshold is set so 95% of in-distribution validation images pass, and the smartphone set is used only for the final numbers.
+
+| Score | AUROC (dermoscopy vs smartphone) | Smartphone photos caught | False alarms on dermoscopy test |
+|---|---:|---:|---:|
+| Model confidence | 0.765 ± 0.023 | 23.7% ± 6.1 | 7.1% ± 4.9 |
+| Energy | 0.792 ± 0.043 | 21.4% ± 10.5 | 4.3% ± 2.1 |
+| **Mahalanobis (CLS embedding)** | **0.946 ± 0.010** | **70.7% ± 7.3** | 6.4% ± 3.1 |
+
+- Distance in feature space is a far better warning sign than confidence: at the same false-alarm budget, the model's own confidence catches under a quarter of smartphone photos.
+- False alarms on the dermoscopy test set average 6.4%, close to the 5% target, but vary by seed (std 3.1 points) because each threshold comes from only 119 validation images.
+
+The app combines two gates: refuse unfamiliar photos, then answer only the 80% most confident of the familiar ones (both thresholds set on validation images).
+
+| | Dermoscopy test | Smartphone (OOD) |
+|---|---:|---:|
+| Accuracy if it answers everything | 81.6% ± 2.7 | 52.9% ± 1.8 |
+| Refused as unfamiliar | 6.4% ± 3.1 | 70.7% ± 7.3 |
+| Refused as not confident | 20.3% ± 3.7 | 13.3% ± 1.8 |
+| Answered | 73.3% ± 6.3 | 16.0% ± 6.6 |
+| **Accuracy when answered** | **89.7% ± 1.4** | 59.7% ± 4.6 |
+
+**Reading this honestly:** the gates work mostly by refusing. 84% of smartphone photos get no answer, which is the right behaviour for a model that is about 53% accurate on them. The smartphone photos that slip through are answered somewhat more accurately (59.7% vs 52.9%), but still far below dermoscopy accuracy, so the gates reduce harm without fixing the shift itself.
+
+### Deployment
+
+[`skinshift/export.py`](skinshift/export.py) trains LoRA (seed 42), merges the adapter into the ViT, exports ONNX with two outputs (logits and the CLS embedding), quantizes the weights to int8, and fits the shift detector on the int8 model's own features, since those are what the app computes. It then benchmarks every version against PyTorch ([`reports/deploy_benchmark.json`](reports/deploy_benchmark.json)):
+
+| | PyTorch | ONNX fp32 | ONNX int8 (shipped) |
+|---|---:|---:|---:|
+| Model size | | 23.2 MB | **6.7 MB** |
+| CPU latency, one image (this laptop) | 5.6 ms | 5.6 ms | 6.1 ms |
+| Predictions identical to PyTorch (dermoscopy / smartphone) | | 100% / 100% | 93.7% / 92.0% |
+| Accuracy (dermoscopy / smartphone) | 71.4% / 51.6% | 71.4% / 51.6% | 71.4% / 50.6% |
+| Shift detector AUROC | 0.932 | 0.932 | 0.927 |
+
+- int8 makes the model 3.5× smaller but, for a model this small, not faster on this CPU. That is the measured result.
+- The shipped model is one seed-42 run, which happens to sit at the low end of the 5-seed range on dermoscopy accuracy (71.4% vs a 81.6% mean). Training on Apple's MPS backend is not bit-reproducible (see Limitations), so the committed files in [`deploy/model/`](deploy/model) are the reference.
+
+[`deploy/`](deploy) is the demo app: a Gradio UI on the int8 model through ONNX Runtime, with no PyTorch in the container, and a Dockerfile for Hugging Face Spaces. Example images are credited in [`deploy/examples/ATTRIBUTION.md`](deploy/examples/ATTRIBUTION.md).
+
+| A dermoscopy image: answered | A smartphone photo: refused as unfamiliar |
+|---|---|
+| ![Dermoscopy example answered](reports/figures/app_dermoscopy.jpg) | ![Smartphone example refused](reports/figures/app_smartphone.jpg) |
 
 ## Planned study
 
@@ -138,7 +188,8 @@ This is a tight, honest v1, not the full study. Multi-seed error bars, the other
 - [x] Day 5: calibration + abstention (risk-coverage), 5 seeds with std bands — done; caught and fixed a real interpolation bug along the way (see Results)
 - [x] Day 6: shortcut probe — done (see Results); no evidence found of border-shortcut reliance
 - [x] Day 7: push to GitHub, with CI — done
-- [ ] *(beyond v1)* DoRA, LoRA+, VeRA, AdaLoRA, subgroup analysis, HAM10000 as a second shift
+- [x] v2: shift detector (5 seeds), ONNX + int8 export, Gradio demo with a Dockerfile for Hugging Face Spaces
+- [ ] *(beyond v2)* DoRA, LoRA+, VeRA, AdaLoRA, subgroup analysis, HAM10000 as a second shift
 
 ## Run it
 
@@ -149,7 +200,10 @@ python -m skinshift.download            # ~75MB, a few minutes (small per-image 
 python -m skinshift.train --method linear_probe   # and --method full / lora
 python -m skinshift.report              # comparison table + figures from whatever ran
 python -m skinshift.shortcut_probe      # the Day 6 diagnostic
-pytest -q                               # 19 tests
+python -m skinshift.shift --all-seeds   # v2: shift detectors, 5 seeds -> reports/shift_detection.json
+python -m skinshift.export              # v2: ONNX + int8 model and detector -> deploy/model/
+cd deploy && python app.py              # v2: demo app on http://localhost:7860
+pytest -q                               # 28 tests
 ```
 
 `requirements.txt` (unpinned) also works for a first-time install, but `requirements-lock.txt` is what CI uses and what the numbers above were actually produced with — pinned deliberately, because `transformers`' internal ViT layer names already changed across versions during this project (see the LoRA config comment in `skinshift/train.py`), which silently breaks the LoRA arm rather than raising an obviously-relevant error.
@@ -157,6 +211,7 @@ pytest -q                               # 19 tests
 ## Limitations to state up front
 
 - A benchmark result is not clinical validity.
+- The shift detector flags images that look unlike the training data, not predictions that are wrong. Dermoscopy versus smartphone is a large, visible shift; subtler ones (another dermatoscope brand, a different clinic) may pass it.
 - Labels come from different sources with different confirmation standards (biopsy versus consensus).
 - Small subgroups will give wide uncertainty.
 - Some dermatology datasets carry non-commercial licenses, which will be checked and stated.
