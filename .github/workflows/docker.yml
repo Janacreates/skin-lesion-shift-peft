@@ -1,0 +1,32 @@
+name: docker
+
+# Builds the demo app's image from deploy/ and publishes it to GitHub Container Registry, where
+# Azure Container Apps pulls it from. (Azure for Students subscriptions can run images but can't
+# build them, so the build happens here.)
+on:
+  push:
+    branches: [main, deploy-shift]
+    paths: ["deploy/**", ".github/workflows/docker.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: deploy
+          push: true
+          tags: |
+            ghcr.io/janacreates/skin-lesion-shift-demo:latest
+            ghcr.io/janacreates/skin-lesion-shift-demo:${{ github.sha }}
