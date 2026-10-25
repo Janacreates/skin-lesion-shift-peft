@@ -5,3 +5,7 @@ pillow>=11.0
 scikit-learn>=1.5
 matplotlib>=3.9
 pytest>=7.0
+# v2 export and tests (the demo app itself needs only deploy/requirements.txt)
+onnx>=1.20
+onnxscript>=0.5
+onnxruntime>=1.22

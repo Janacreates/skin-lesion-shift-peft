@@ -11,3 +11,7 @@ scikit-learn==1.9.1
 matplotlib==3.11.2
 pytest==9.1.1
 numpy==2.4.6
+# v2 export and tests (the demo app itself needs only deploy/requirements.txt)
+onnx==1.23.2
+onnxscript==0.7.2
+onnxruntime==1.31.0

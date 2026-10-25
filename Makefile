@@ -1,6 +1,6 @@
 PYTHON ?= python3
 
-.PHONY: install download train-all report test
+.PHONY: install download train-all report test shift export app
 
 install:
 	$(PYTHON) -m pip install -r requirements.txt
@@ -17,3 +17,13 @@ train-all:
 
 test:
 	$(PYTHON) -m pytest -q
+
+# v2: shift detectors across 5 seeds, then the deployable int8 model + detector, then the demo app
+shift:
+	$(PYTHON) -m skinshift.shift --all-seeds
+
+export:
+	$(PYTHON) -m skinshift.export
+
+app:
+	$(PYTHON) deploy/app.py
