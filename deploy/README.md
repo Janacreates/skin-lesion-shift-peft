@@ -10,6 +10,8 @@ short_description: A ViT lesion classifier that refuses unfamiliar photos
 
 # Shift-aware skin lesion classifier
 
+**Live demo:** https://skin-lesion-demo.calmplant-b2760678.northcentralus.azurecontainerapps.io/ (Azure Container Apps; the first visit after a quiet spell takes 10 to 20 seconds while it starts). The front matter above also lets this folder run as a Hugging Face Space.
+
 A Vision Transformer (ViT-Tiny, fine-tuned with LoRA) that classifies four lesion types from **dermoscopy** images, plus a shift detector that refuses photos that look unlike its training data, such as ordinary smartphone photos.
 
 **Research and education only. Not medical advice and not a diagnostic tool.** Uploaded images are processed in memory and not stored.

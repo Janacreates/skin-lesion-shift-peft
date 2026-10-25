@@ -1,6 +1,6 @@
 # Fine-tuning under distribution shift: skin lesion classification with LoRA-family methods
 
-> **Status: v2 (2026-10-24): a demo app with a shift detector, ready for Hugging Face Spaces, see "v2" below. v1 complete (2026-09-23).** All three methods trained and evaluated in- and out-of-distribution across 5 seeds, plus a single-seed shortcut probe — see "Results" below. Other PEFT methods (DoRA, LoRA+, VeRA, AdaLoRA) and a second shift remain future work, not v1 scope.
+> **Status: v2 (2026-10-24): a shift detector and a [live demo](https://skin-lesion-demo.calmplant-b2760678.northcentralus.azurecontainerapps.io/) on Azure Container Apps, see "v2" below. v1 complete (2026-09-23).** All three methods trained and evaluated in- and out-of-distribution across 5 seeds, plus a single-seed shortcut probe — see "Results" below. Other PEFT methods (DoRA, LoRA+, VeRA, AdaLoRA) and a second shift remain future work, not v1 scope.
 
 > **Research and education only.** Not medical advice, and not a diagnostic tool.
 
@@ -95,7 +95,9 @@ The app combines two gates: refuse unfamiliar photos, then answer only the 80% m
 - int8 makes the model 3.5× smaller but, for a model this small, not faster on this CPU. That is the measured result.
 - The shipped model is one seed-42 run, which happens to sit at the low end of the 5-seed range on dermoscopy accuracy (71.4% vs a 81.6% mean). Training on Apple's MPS backend is not bit-reproducible (see Limitations), so the committed files in [`deploy/model/`](deploy/model) are the reference.
 
-[`deploy/`](deploy) is the demo app: a Gradio UI on the int8 model through ONNX Runtime, with no PyTorch in the container, and a Dockerfile for Hugging Face Spaces. Example images are credited in [`deploy/examples/ATTRIBUTION.md`](deploy/examples/ATTRIBUTION.md).
+[`deploy/`](deploy) is the demo app: a Gradio UI on the int8 model through ONNX Runtime, with no PyTorch in the container. [GitHub Actions](.github/workflows/docker.yml) builds its Docker image on every change to `deploy/` and publishes it to GitHub Container Registry, and **Azure Container Apps** runs it, scaling to zero when idle, so the first visit after a quiet spell takes 10 to 20 seconds. Example images are credited in [`deploy/examples/ATTRIBUTION.md`](deploy/examples/ATTRIBUTION.md).
+
+**Live demo: [skin-lesion-demo.calmplant-b2760678.northcentralus.azurecontainerapps.io](https://skin-lesion-demo.calmplant-b2760678.northcentralus.azurecontainerapps.io/)**
 
 | A dermoscopy image: answered | A smartphone photo: refused as unfamiliar |
 |---|---|
@@ -188,7 +190,7 @@ This is a tight, honest v1, not the full study. Multi-seed error bars, the other
 - [x] Day 5: calibration + abstention (risk-coverage), 5 seeds with std bands — done; caught and fixed a real interpolation bug along the way (see Results)
 - [x] Day 6: shortcut probe — done (see Results); no evidence found of border-shortcut reliance
 - [x] Day 7: push to GitHub, with CI — done
-- [x] v2: shift detector (5 seeds), ONNX + int8 export, Gradio demo with a Dockerfile for Hugging Face Spaces
+- [x] v2: shift detector (5 seeds), ONNX + int8 export, Gradio demo built by GitHub Actions and deployed on Azure Container Apps
 - [ ] *(beyond v2)* DoRA, LoRA+, VeRA, AdaLoRA, subgroup analysis, HAM10000 as a second shift
 
 ## Run it
