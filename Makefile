@@ -1,6 +1,6 @@
 PYTHON ?= python3
 
-.PHONY: install download train-all report test shift export app
+.PHONY: install download train-all report test shift attention export app
 
 install:
 	$(PYTHON) -m pip install -r requirements.txt
@@ -21,6 +21,10 @@ test:
 # v2: shift detectors across 5 seeds, then the deployable int8 model + detector, then the demo app
 shift:
 	$(PYTHON) -m skinshift.shift --all-seeds
+
+# where the model looks: gradient-weighted attention maps, dermoscopy vs smartphone, 5 seeds
+attention:
+	$(PYTHON) -m skinshift.attention --all-seeds
 
 export:
 	$(PYTHON) -m skinshift.export
