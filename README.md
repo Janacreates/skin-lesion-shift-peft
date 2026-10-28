@@ -242,6 +242,10 @@ pytest -q                               # 33 tests
 - Some dermatology datasets carry non-commercial licenses, which will be checked and stated.
 - Training seeds don't reproduce bit-for-bit on Apple's MPS backend (confirmed directly: the same seed run twice gave slightly different numbers) — the 5-seed spread already captures more variance than seed-to-seed noise alone, so this doesn't change any conclusion above, but exact reproduction of a single seed's numbers isn't guaranteed. Update (2026-10-28): after fixing the split-order bug (see Results), two full 5-seed attention runs matched exactly, so much of that run-to-run difference likely came from the bug rather than MPS.
 
+## How I built this
+
+I used Claude Code as an AI pair programmer, mainly to write implementation code. I chose what to build and which questions to ask, approved each design before it was written, and checked the reported numbers.
+
 ## License
 
 MIT (code). Dataset licenses are separate and are listed above as they are confirmed.
