@@ -40,9 +40,11 @@ def lesion_split(rows: List[Dict], seed: int, val_frac: float = 0.15, test_frac:
     n = len(lesion_ids)
     n_test = max(1, int(round(n * test_frac)))
     n_val = max(1, int(round(n * val_frac)))
-    test_ids = set(lesion_ids[:n_test])
-    val_ids = set(lesion_ids[n_test:n_test + n_val])
-    train_ids = set(lesion_ids[n_test + n_val:])
+    # Build each split from the shuffled list, not from a set: iterating a set of strings follows
+    # Python's per-process hash seed, which changed the image order (not the membership) between runs.
+    test_ids = lesion_ids[:n_test]
+    val_ids = lesion_ids[n_test:n_test + n_val]
+    train_ids = lesion_ids[n_test + n_val:]
 
     train = [r for lid in train_ids for r in groups[lid]]
     val = [r for lid in val_ids for r in groups[lid]]
