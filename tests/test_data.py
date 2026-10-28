@@ -68,3 +68,17 @@ def test_missing_lesion_id_falls_back_to_isic_id():
     train, val, test = lesion_split(rows, seed=0)
     check_no_lesion_overlap(train, val, test)
     assert len(train) + len(val) + len(test) == 20
+
+
+def test_lesion_split_order_does_not_depend_on_the_python_hash_seed():
+    # Regression test: the splits were once built by iterating sets of lesion ids, so the image
+    # order (and therefore training batches) changed with PYTHONHASHSEED even at a fixed seed.
+    import os
+    import subprocess
+    import sys
+
+    code = ("from tests.test_data import _rows; from skinshift.data import lesion_split; "
+            "print([[r['isic_id'] for r in s] for s in lesion_split(_rows(40), seed=3)])")
+    outs = {subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True,
+                           env={**os.environ, "PYTHONHASHSEED": h}).stdout for h in ("0", "1", "2")}
+    assert len(outs) == 1

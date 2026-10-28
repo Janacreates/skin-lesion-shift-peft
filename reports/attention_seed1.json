@@ -1,0 +1,21 @@
+{
+  "seed": 1,
+  "uniform_central_mass": 0.32653061224489793,
+  "id_test": {
+    "n": 122,
+    "accuracy": 0.8114754098360656,
+    "central_mass": 0.449733167886734,
+    "spread": 0.9279172445438958,
+    "central_mass_correct": 0.4372384548187256,
+    "central_mass_wrong": 0.5035147666931152
+  },
+  "ood": {
+    "n": 502,
+    "accuracy": 0.49800796812749004,
+    "central_mass": 0.432466596364975,
+    "spread": 0.9225251086280829,
+    "central_mass_correct": 0.4387218654155731,
+    "central_mass_wrong": 0.4262610077857971
+  },
+  "auroc_less_central_is_ood": 0.5374240741950231
+}

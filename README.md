@@ -1,6 +1,6 @@
 # Fine-tuning under distribution shift: skin lesion classification with LoRA-family methods
 
-> **Status: v2 (2026-10-24): a shift detector and a [live demo](https://skin-lesion-demo.calmplant-b2760678.northcentralus.azurecontainerapps.io/) on Azure Container Apps, see "v2" below. v1 complete (2026-09-23).** All three methods trained and evaluated in- and out-of-distribution across 5 seeds, plus a single-seed shortcut probe — see "Results" below. Other PEFT methods (DoRA, LoRA+, VeRA, AdaLoRA) and a second shift remain future work, not v1 scope.
+> **Status: v2 (2026-10-24; attention maps added 2026-10-28): a shift detector, attention maps and a [live demo](https://skin-lesion-demo.calmplant-b2760678.northcentralus.azurecontainerapps.io/) on Azure Container Apps, see "v2" below. v1 complete (2026-09-23).** All three methods trained and evaluated in- and out-of-distribution across 5 seeds, plus a single-seed shortcut probe — see "Results" below. Other PEFT methods (DoRA, LoRA+, VeRA, AdaLoRA) and a second shift remain future work, not v1 scope.
 
 > **Research and education only.** Not medical advice, and not a diagnostic tool.
 
@@ -47,9 +47,10 @@ Question 5 from above: does the model rely on border content (rulers, ID sticker
 
 **No evidence of border-shortcut reliance for any method:** removing nearly two-thirds of each image's area by cropping to the center changed accuracy by at most 1.2 points, in either direction. This is a negative result and is reported as one, not reframed as something else. It only tests one specific hypothesis (border/edge content); it does not rule out other shortcuts such as colour cast or capture-device artefacts, and one seed is not enough to say the true effect is exactly zero rather than small.
 
-**Two things found and fixed while producing these numbers, left in for the record:**
+**Three things found and fixed, left in for the record:**
 - One `lora` run silently overlapped with a monitoring script that re-ran the same seed concurrently, inflating that run's *training-time* measurement ~40x (GPU contention, not a real cost). The comparison table reports the **median** training time across seeds for exactly this reason — the accuracy/calibration numbers from that run were unaffected and are included normally.
 - The first version of the multi-seed risk-coverage plot used `np.interp` on an array that wasn't sorted ascending (a real bug, not a data issue), which silently produced a near-flat, wrong curve. Caught by inspecting the figure rather than trusting the numbers, fixed, and locked in with a regression test (`tests/test_report.py`).
+- Found later, while building the attention maps (2026-10-28): `lesion_split` built each split by iterating a Python `set` of lesion ids, so the *order* of images inside each split followed Python's per-process hash seed. Membership was always the same, so there was no leakage and every test set above holds the same images, but training batches differed between runs at the same seed. Now fixed, with a regression test that runs the split under three hash seeds (`tests/test_data.py`). The v1 and v2 numbers above come from the original runs and were not re-run.
 
 ## v2: deployment and a shift detector (2026-10-24)
 
@@ -79,6 +80,25 @@ The app combines two gates: refuse unfamiliar photos, then answer only the 80% m
 | **Accuracy when answered** | **89.7% ± 1.4** | 59.7% ± 4.6 |
 
 **Reading this honestly:** the gates work mostly by refusing. 84% of smartphone photos get no answer, which is the right behaviour for a model that is about 53% accurate on them. The smartphone photos that slip through are answered somewhat more accurately (59.7% vs 52.9%), but still far below dermoscopy accuracy, so the gates reduce harm without fixing the shift itself.
+
+### Where does the model look? (LoRA, 5 seeds)
+
+[`skinshift/attention.py`](skinshift/attention.py) asks the visual version of the shortcut question: on a phone photo, does the model's attention move off the lesion? It computes gradient-weighted attention maps (attention rollout weighted by gradients, after Chefer et al., 2021) for every dermoscopy test image and every smartphone photo. Plain attention rollout came out almost uniform, so it is not used. There are no lesion masks for these images, so "on the lesion" is approximated by the central 8×8 of the 14×14 patches, where the lesion sits in most images of both datasets. Uniform attention would put 32.7% of its weight there.
+
+| | Dermoscopy test | Smartphone (OOD) |
+|---|---:|---:|
+| Accuracy | 81.6% ± 1.8 | 54.8% ± 3.5 |
+| Attention in the central region | 48.9% ± 2.8 | 45.7% ± 2.1 |
+| ... on correct predictions | 48.5% ± 2.9 | 46.0% ± 2.2 |
+| ... on wrong predictions | 50.7% ± 4.0 | 45.4% ± 2.1 |
+| Spread (normalised entropy, 1 = uniform) | 0.92 | 0.92 |
+
+- **The model keeps looking at the lesion on phone photos.** Its attention in the central region barely moves (48.9% to 45.7%, against 32.7% if it looked everywhere equally), and right and wrong phone predictions look the same (46.0% vs 45.4%).
+- **Where it looks hardly tells the two domains apart** (AUROC 0.58 ± 0.05), while where its features land does (Mahalanobis AUROC 0.95, above). Together with the shortcut probe, this points the accuracy drop at how lesions look through a phone camera, not at where the model looks, which is also why a feature-space detector works and confidence does not.
+- Single maps are noisy: in the figure, the dermoscopy actinic keratosis gets most of its weight in a corner and is still classified correctly. The table averages over every image.
+- These runs use the fixed split order (see "found and fixed" above), so their accuracies differ slightly from the tables above. Two full 5-seed runs gave identical numbers.
+
+![Attention maps, dermoscopy vs smartphone](reports/figures/fig_attention_maps.png)
 
 ### Deployment
 
@@ -191,6 +211,7 @@ This is a tight, honest v1, not the full study. Multi-seed error bars, the other
 - [x] Day 6: shortcut probe — done (see Results); no evidence found of border-shortcut reliance
 - [x] Day 7: push to GitHub, with CI — done
 - [x] v2: shift detector (5 seeds), ONNX + int8 export, Gradio demo built by GitHub Actions and deployed on Azure Container Apps
+- [x] v2: gradient-weighted attention maps (5 seeds), and a fix for split order depending on Python's hash seed
 - [ ] *(beyond v2)* DoRA, LoRA+, VeRA, AdaLoRA, subgroup analysis, HAM10000 as a second shift
 
 ## Run it
@@ -203,9 +224,10 @@ python -m skinshift.train --method linear_probe   # and --method full / lora
 python -m skinshift.report              # comparison table + figures from whatever ran
 python -m skinshift.shortcut_probe      # the Day 6 diagnostic
 python -m skinshift.shift --all-seeds   # v2: shift detectors, 5 seeds -> reports/shift_detection.json
+python -m skinshift.attention --all-seeds   # v2: attention maps, 5 seeds -> reports/attention.json
 python -m skinshift.export              # v2: ONNX + int8 model and detector -> deploy/model/
 cd deploy && python app.py              # v2: demo app on http://localhost:7860
-pytest -q                               # 28 tests
+pytest -q                               # 33 tests
 ```
 
 `requirements.txt` (unpinned) also works for a first-time install, but `requirements-lock.txt` is what CI uses and what the numbers above were actually produced with — pinned deliberately, because `transformers`' internal ViT layer names already changed across versions during this project (see the LoRA config comment in `skinshift/train.py`), which silently breaks the LoRA arm rather than raising an obviously-relevant error.
@@ -213,11 +235,16 @@ pytest -q                               # 28 tests
 ## Limitations to state up front
 
 - A benchmark result is not clinical validity.
+- The attention analysis uses the image centre as a stand-in for the lesion, because there are no lesion masks, and attention maps show where a model looks, not why.
 - The shift detector flags images that look unlike the training data, not predictions that are wrong. Dermoscopy versus smartphone is a large, visible shift; subtler ones (another dermatoscope brand, a different clinic) may pass it.
 - Labels come from different sources with different confirmation standards (biopsy versus consensus).
 - Small subgroups will give wide uncertainty.
 - Some dermatology datasets carry non-commercial licenses, which will be checked and stated.
-- Training seeds don't reproduce bit-for-bit on Apple's MPS backend (confirmed directly: the same seed run twice gave slightly different numbers) — the 5-seed spread already captures more variance than seed-to-seed noise alone, so this doesn't change any conclusion above, but exact reproduction of a single seed's numbers isn't guaranteed.
+- Training seeds don't reproduce bit-for-bit on Apple's MPS backend (confirmed directly: the same seed run twice gave slightly different numbers) — the 5-seed spread already captures more variance than seed-to-seed noise alone, so this doesn't change any conclusion above, but exact reproduction of a single seed's numbers isn't guaranteed. Update (2026-10-28): after fixing the split-order bug (see Results), two full 5-seed attention runs matched exactly, so much of that run-to-run difference likely came from the bug rather than MPS.
+
+## How I built this
+
+I used Claude Code as an AI pair programmer, mainly to write implementation code. I chose what to build and which questions to ask, approved each design before it was written, and checked the reported numbers.
 
 ## License
 
